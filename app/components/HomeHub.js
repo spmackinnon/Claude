@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import TaskDetailModal from './TaskDetailModal';
-import Calendar from './Calendar';
+import CalendarWidget from './CalendarWidget';
 import { generateMealPlan, buildGroceryList, MEAL_DATABASE } from '../../lib/mealDatabase';
 
 // ── Helpers ────────────────────────────────────────────────────────
@@ -453,7 +453,6 @@ const TABS = [
   { key: 'this-week', label: 'This Week' },
   { key: 'routines', label: 'Routines' },
   { key: 'errands', label: 'Errands' },
-  { key: 'calendar', label: 'Calendar' },
   { key: 'meals', label: 'Meals' },
 ];
 
@@ -465,7 +464,7 @@ export default function HomeHub({ data, onUpdate, onNavigate }) {
   const updateList = (key, items) => onUpdate({ taskLists: { ...taskLists, [key]: items } });
 
   return (
-    <div className="space-fade max-w-2xl mx-auto space-y-4">
+    <div className="space-fade max-w-4xl mx-auto space-y-4">
       {/* Header */}
       <div className="mb-2">
         <p className="text-stone-400 text-sm">{formatDate()}</p>
@@ -481,8 +480,11 @@ export default function HomeHub({ data, onUpdate, onNavigate }) {
         )}
       </div>
 
+      {/* Task list + Calendar widget side by side on desktop */}
+      <div className="flex flex-col md:flex-row gap-4 items-start">
+
       {/* Tab bar + view toggle */}
-      <div className="bg-white rounded-2xl shadow-card">
+      <div className="bg-white rounded-2xl shadow-card flex-1 min-w-0">
         <div className="flex items-center border-b border-stone-100 px-1 pt-1">
           <div className="flex flex-1 overflow-x-auto">
             {TABS.map(tab => (
@@ -491,7 +493,7 @@ export default function HomeHub({ data, onUpdate, onNavigate }) {
                   activeTab === tab.key ? 'border-sage-500 text-sage-700' : 'border-transparent text-stone-400 hover:text-stone-600'
                 }`}>
                 {tab.label}
-                {tab.key !== 'meals' && tab.key !== 'calendar' && taskLists[tab.key] && (
+                {tab.key !== 'meals' && taskLists[tab.key] && (
                   <span className="ml-1.5 text-xs text-stone-400">
                     {(taskLists[tab.key] || []).filter(t => !t.completed).length}
                   </span>
@@ -499,7 +501,7 @@ export default function HomeHub({ data, onUpdate, onNavigate }) {
               </button>
             ))}
           </div>
-          {activeTab !== 'meals' && activeTab !== 'calendar' && (
+          {activeTab !== 'meals' && (
             <div className="flex items-center gap-1 px-2 pb-1 flex-shrink-0">
               {(activeTab === 'this-week' || activeTab === 'routines' || activeTab === 'errands') && (
                 <button
@@ -520,11 +522,9 @@ export default function HomeHub({ data, onUpdate, onNavigate }) {
           )}
         </div>
 
-        <div className={activeTab === 'calendar' ? 'p-4' : 'p-4'}>
+        <div className="p-4">
           {activeTab === 'meals' ? (
             <MealsTab meals={meals} mealPreferences={mealPreferences} groceryItems={groceryItems} familyMembers={familyMembers} onUpdate={onUpdate} />
-          ) : activeTab === 'calendar' ? (
-            <Calendar data={data} onUpdate={onUpdate} compact />
           ) : (
             <TaskListTab
               listKey={activeTab}
@@ -536,6 +536,13 @@ export default function HomeHub({ data, onUpdate, onNavigate }) {
           )}
         </div>
       </div>
+
+      {/* Calendar widget */}
+      <div className="w-full md:w-64 flex-shrink-0">
+        <CalendarWidget data={data} onUpdate={onUpdate} />
+      </div>
+
+      </div>{/* end flex row */}
 
       {/* Weekly Reset */}
       <WeeklyReset weeklyReset={weeklyReset} projects={data.projects} onUpdate={onUpdate} />
