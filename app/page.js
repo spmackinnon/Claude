@@ -11,6 +11,7 @@ import Recalibrate from './components/Recalibrate';
 import Onboarding from './components/Onboarding';
 import SystemMap from './components/SystemMap';
 import FAQ from './components/FAQ';
+import PWARegister from './components/PWARegister';
 
 export default function App() {
   const [data, setData, hydrated] = useLocalStorage('fixr-home-os', defaultData);
@@ -64,6 +65,9 @@ export default function App() {
 
       {/* FAQ modal */}
       {showFaq && <FAQ onClose={() => setShowFaq(false)} />}
+
+      {/* PWA service worker + install prompt */}
+      <PWARegister />
 
       {/* Navigation */}
       <Navigation
