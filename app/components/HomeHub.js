@@ -376,10 +376,11 @@ function MealsTab({ meals, mealPreferences, groceryItems, familyMembers, onUpdat
 }
 
 // ── Weekly Reset ───────────────────────────────────────────────────
-function WeeklyReset({ weeklyReset, onUpdate }) {
+function WeeklyReset({ weeklyReset, projects, onUpdate }) {
   const [open, setOpen] = useState(false);
   const done = weeklyReset.checklist.filter(i => i.completed).length;
   const total = weeklyReset.checklist.length;
+  const activeProjects = (projects || []).filter(p => p.status === 'active');
 
   const toggle = (id) => {
     const updated = weeklyReset.checklist.map(i => i.id === id ? { ...i, completed: !i.completed } : i);
@@ -408,8 +409,39 @@ function WeeklyReset({ weeklyReset, onUpdate }) {
       </button>
       {open && (
         <div className="px-4 pb-4 border-t border-stone-50">
-          <div className="flex gap-2 mt-3 mb-3">
-            <input type="text" value={weeklyReset.focusArea || ''} onChange={e => onUpdate({ weeklyReset: { ...weeklyReset, focusArea: e.target.value } })} placeholder="This week's focus area..." className="flex-1 text-sm border border-stone-200 rounded-xl px-3 py-2 text-stone-700 placeholder-stone-300" />
+          <div className="mt-3 mb-3">
+            <label className="text-xs text-stone-400 mb-1.5 block">This week's focus area</label>
+            <input
+              type="text"
+              list="focus-suggestions"
+              value={weeklyReset.focusArea || ''}
+              onChange={e => onUpdate({ weeklyReset: { ...weeklyReset, focusArea: e.target.value } })}
+              placeholder="Type or pick an active project…"
+              className="w-full text-sm border border-stone-200 rounded-xl px-3 py-2 text-stone-700 placeholder-stone-300"
+            />
+            {activeProjects.length > 0 && (
+              <datalist id="focus-suggestions">
+                {activeProjects.map(p => <option key={p.id} value={p.title} />)}
+              </datalist>
+            )}
+            {activeProjects.length > 0 && (
+              <div className="flex gap-1.5 flex-wrap mt-2">
+                {activeProjects.map(p => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => onUpdate({ weeklyReset: { ...weeklyReset, focusArea: p.title } })}
+                    className={`text-xs px-2.5 py-1 rounded-full border transition-all ${
+                      weeklyReset.focusArea === p.title
+                        ? 'bg-sage-600 text-white border-sage-600'
+                        : 'border-stone-200 text-stone-500 hover:border-sage-300 hover:text-sage-600'
+                    }`}
+                  >
+                    {p.title}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <ul className="space-y-2">
             {weeklyReset.checklist.map(item => (
@@ -504,7 +536,7 @@ export default function HomeHub({ data, onUpdate }) {
       </div>
 
       {/* Weekly Reset */}
-      <WeeklyReset weeklyReset={weeklyReset} onUpdate={onUpdate} />
+      <WeeklyReset weeklyReset={weeklyReset} projects={data.projects} onUpdate={onUpdate} />
     </div>
   );
 }

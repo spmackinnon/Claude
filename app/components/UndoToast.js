@@ -15,7 +15,7 @@ export default function UndoToast({ lastChanged, canUndo, onUndo }) {
     if (!lastChanged) return;
     setVisible(true);
     clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => setVisible(false), 5000);
+    timerRef.current = setTimeout(() => setVisible(false), 10000);
     return () => clearTimeout(timerRef.current);
   }, [lastChanged]);
 
