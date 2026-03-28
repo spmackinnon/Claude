@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import TaskDetailModal from './TaskDetailModal';
+import Calendar from './Calendar';
 import { generateMealPlan, buildGroceryList, MEAL_DATABASE } from '../../lib/mealDatabase';
 
 // ── Helpers ────────────────────────────────────────────────────────
@@ -452,6 +453,7 @@ const TABS = [
   { key: 'this-week', label: 'This Week' },
   { key: 'routines', label: 'Routines' },
   { key: 'errands', label: 'Errands' },
+  { key: 'calendar', label: 'Calendar' },
   { key: 'meals', label: 'Meals' },
 ];
 
@@ -489,7 +491,7 @@ export default function HomeHub({ data, onUpdate, onNavigate }) {
                   activeTab === tab.key ? 'border-sage-500 text-sage-700' : 'border-transparent text-stone-400 hover:text-stone-600'
                 }`}>
                 {tab.label}
-                {tab.key !== 'meals' && taskLists[tab.key] && (
+                {tab.key !== 'meals' && tab.key !== 'calendar' && taskLists[tab.key] && (
                   <span className="ml-1.5 text-xs text-stone-400">
                     {(taskLists[tab.key] || []).filter(t => !t.completed).length}
                   </span>
@@ -497,9 +499,9 @@ export default function HomeHub({ data, onUpdate, onNavigate }) {
               </button>
             ))}
           </div>
-          {activeTab !== 'meals' && (
+          {activeTab !== 'meals' && activeTab !== 'calendar' && (
             <div className="flex items-center gap-1 px-2 pb-1 flex-shrink-0">
-              {(activeTab === 'routines' || activeTab === 'errands') && (
+              {(activeTab === 'this-week' || activeTab === 'routines' || activeTab === 'errands') && (
                 <button
                   onClick={() => onNavigate('library')}
                   className="text-[11px] font-medium text-sage-600 hover:text-sage-700 px-2 py-1 rounded-lg hover:bg-sage-50 transition-colors whitespace-nowrap mr-1"
@@ -518,9 +520,11 @@ export default function HomeHub({ data, onUpdate, onNavigate }) {
           )}
         </div>
 
-        <div className="p-4">
+        <div className={activeTab === 'calendar' ? 'p-4' : 'p-4'}>
           {activeTab === 'meals' ? (
             <MealsTab meals={meals} mealPreferences={mealPreferences} groceryItems={groceryItems} familyMembers={familyMembers} onUpdate={onUpdate} />
+          ) : activeTab === 'calendar' ? (
+            <Calendar data={data} onUpdate={onUpdate} compact />
           ) : (
             <TaskListTab
               listKey={activeTab}

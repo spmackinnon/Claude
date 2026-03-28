@@ -206,7 +206,7 @@ function FamilySettings({ familyMembers, onUpdate, onClose }) {
 }
 
 // ── Main Calendar ──────────────────────────────────────────────────
-export default function Calendar({ data, onUpdate }) {
+export default function Calendar({ data, onUpdate, compact = false }) {
   const { appointments = [], familyMembers = [], taskLists = {} } = data;
 
   const now = new Date();
@@ -255,8 +255,8 @@ export default function Calendar({ data, onUpdate }) {
     .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))
     .slice(0, 10);
 
-  return (
-    <div className="space-fade max-w-2xl mx-auto">
+  const inner = (
+    <>
       {/* Modals */}
       {(addingFor || editing) && (
         <AppointmentModal
@@ -276,31 +276,56 @@ export default function Calendar({ data, onUpdate }) {
         />
       )}
 
-      {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <h1 className="font-serif text-2xl text-stone-800">Calendar</h1>
-          <p className="text-stone-500 text-sm mt-1">Appointments, events, and reminders.</p>
+      {/* Header — hidden in compact (tab) mode */}
+      {!compact && (
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h1 className="font-serif text-2xl text-stone-800">Calendar</h1>
+            <p className="text-stone-500 text-sm mt-1">Appointments, events, and reminders.</p>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => setShowFamily(true)} className="flex items-center gap-1.5 text-sm text-stone-500 border border-stone-200 px-3 py-2 rounded-xl hover:bg-stone-50 transition-colors">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+              Family
+            </button>
+            <button onClick={() => setAddingFor(todayStr)} className="flex items-center gap-1.5 bg-sage-600 text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-sage-700 transition-colors">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Add
+            </button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <button onClick={() => setShowFamily(true)} className="flex items-center gap-1.5 text-sm text-stone-500 border border-stone-200 px-3 py-2 rounded-xl hover:bg-stone-50 transition-colors">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-            Family
-          </button>
-          <button onClick={() => setAddingFor(todayStr)} className="flex items-center gap-1.5 bg-sage-600 text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-sage-700 transition-colors">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            Add
-          </button>
-        </div>
-      </div>
+      )}
 
-      {/* Family legend */}
-      {familyMembers.length > 0 && (
+      {/* Compact header toolbar */}
+      {compact && (
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            {familyMembers.map(m => (
+              <div key={m.id} className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: m.color }} />
+                <span className="text-xs text-stone-400">{m.name}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => setShowFamily(true)} className="text-xs text-stone-400 hover:text-stone-600 border border-stone-200 px-2.5 py-1.5 rounded-lg hover:bg-stone-50 transition-colors">
+              Family
+            </button>
+            <button onClick={() => setAddingFor(todayStr)} className="flex items-center gap-1 bg-sage-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-sage-700 transition-colors">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+              Add
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Family legend — full-page mode only */}
+      {!compact && familyMembers.length > 0 && (
         <div className="flex gap-3 flex-wrap mb-3">
           {familyMembers.map(m => (
             <div key={m.id} className="flex items-center gap-1.5">
@@ -418,11 +443,17 @@ export default function Calendar({ data, onUpdate }) {
         )}
       </div>
 
-      {/* Sharing note */}
-      <div className="mt-4 bg-stone-50 rounded-xl p-4">
-        <p className="text-xs text-stone-400 font-medium mb-1">Want to share this calendar?</p>
-        <p className="text-sm text-stone-500">Sharing with a partner or nanny requires a backend sync. This is ready to connect to Supabase (free) — ask your developer to set it up when you're ready.</p>
-      </div>
-    </div>
+      {/* Sharing note — only in full-page mode */}
+      {!compact && (
+        <div className="mt-4 bg-stone-50 rounded-xl p-4">
+          <p className="text-xs text-stone-400 font-medium mb-1">Want to share this calendar?</p>
+          <p className="text-sm text-stone-500">Sharing with a partner or nanny requires a backend sync. This is ready to connect to Supabase (free) — ask your developer to set it up when you're ready.</p>
+        </div>
+      )}
+    </>
   );
+
+  if (compact) return inner;
+
+  return <div className="space-fade max-w-2xl mx-auto">{inner}</div>;
 }
