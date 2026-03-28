@@ -560,7 +560,6 @@ const TABS = [
   { key: 'routines', label: 'Routines' },
   { key: 'errands', label: 'Errands' },
   { key: 'all', label: 'All Tasks' },
-  { key: 'meals', label: 'Meals' },
 ];
 
 export default function HomeHub({ data, onUpdate, onNavigate }) {
@@ -609,8 +608,8 @@ export default function HomeHub({ data, onUpdate, onNavigate }) {
           ))}
         </div>
 
-        {/* Row 2: Browse Library (task tabs only) + view toggles */}
-        {activeTab !== 'meals' && activeTab !== 'all' && (
+        {/* Row 2: Browse Library + view toggles */}
+        {activeTab !== 'all' && (
           <div className="flex items-center justify-between px-3 py-1.5 border-b border-stone-50 bg-stone-50/40">
             <button
               onClick={() => onNavigate('library')}
@@ -633,9 +632,7 @@ export default function HomeHub({ data, onUpdate, onNavigate }) {
         )}
 
         <div className="p-4">
-          {activeTab === 'meals' ? (
-            <MealsTab meals={meals} mealPreferences={mealPreferences} groceryItems={groceryItems} familyMembers={familyMembers} onUpdate={onUpdate} />
-          ) : activeTab === 'all' ? (
+          {activeTab === 'all' ? (
             <AllTasksTab
               taskLists={taskLists}
               familyMembers={familyMembers}
@@ -663,6 +660,21 @@ export default function HomeHub({ data, onUpdate, onNavigate }) {
 
       {/* Weekly Reset */}
       <WeeklyReset weeklyReset={weeklyReset} projects={data.projects} onUpdate={onUpdate} />
+
+      {/* Meals widget */}
+      <div className="bg-white rounded-2xl shadow-card overflow-hidden">
+        <div className="px-4 py-3.5 border-b border-stone-50 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-sage-50 flex items-center justify-center flex-shrink-0">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4E724E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/>
+            </svg>
+          </div>
+          <p className="text-sm font-semibold text-stone-700">Meals</p>
+        </div>
+        <div className="p-4">
+          <MealsTab meals={meals} mealPreferences={mealPreferences} groceryItems={groceryItems} familyMembers={familyMembers} onUpdate={onUpdate} />
+        </div>
+      </div>
     </div>
   );
 }
