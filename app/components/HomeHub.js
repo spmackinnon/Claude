@@ -29,33 +29,45 @@ function TaskRow({ task, familyMembers, onToggle, onOpen }) {
   const hasDetails = task.notes || (task.links && task.links.length > 0);
 
   return (
-    <li className="flex items-center gap-3 group py-1.5">
+    <li className="flex items-start gap-3 group py-1.5">
       <input
         type="checkbox"
-        className="custom-checkbox flex-shrink-0"
+        className="custom-checkbox flex-shrink-0 mt-0.5"
         checked={task.completed}
         onChange={onToggle}
       />
       <button
         onClick={onOpen}
-        className={`flex-1 text-left text-sm leading-snug ${task.completed ? 'line-through text-stone-400' : 'text-stone-700 hover:text-stone-900'}`}
+        className={`flex-1 text-left leading-snug ${task.completed ? 'line-through text-stone-400' : 'text-stone-700 hover:text-stone-900'}`}
       >
-        {task.text}
+        <span className="text-sm">{task.text}</span>
+        {/* Due date + assignee below task text */}
+        {(task.dueDate || member) && (
+          <span className="flex items-center gap-2 mt-0.5">
+            {task.dueDate && (
+              <span className={`text-[10px] font-medium ${
+                isToday(task.dueDate)
+                  ? 'text-terracotta-500'
+                  : new Date(task.dueDate) < new Date() && !task.completed
+                  ? 'text-red-400'
+                  : 'text-stone-400'
+              }`}>
+                {isToday(task.dueDate)
+                  ? 'Due today'
+                  : new Date(task.dueDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </span>
+            )}
+            {member && (
+              <span className="text-[10px] text-stone-400 flex items-center gap-1">
+                <span className="w-3 h-3 rounded-full inline-block" style={{ backgroundColor: member.color }} />
+                {member.name}
+              </span>
+            )}
+          </span>
+        )}
       </button>
-      <div className="flex items-center gap-1.5 flex-shrink-0">
+      <div className="flex items-center gap-1.5 flex-shrink-0 mt-0.5">
         {task.priority && <span className={`w-2 h-2 rounded-full ${PRIORITY_COLORS[task.priority]}`} title={task.priority} />}
-        {member && (
-          <span className="w-5 h-5 rounded-full text-white text-[9px] font-bold flex items-center justify-center" style={{ backgroundColor: member.color }}>
-            {member.name.charAt(0)}
-          </span>
-        )}
-        {task.dueDate && (
-          <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
-            isToday(task.dueDate) ? 'bg-terracotta-50 text-terracotta-500' : 'bg-stone-100 text-stone-400'
-          }`}>
-            {isToday(task.dueDate) ? 'Today' : new Date(task.dueDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-          </span>
-        )}
         {hasDetails && (
           <span className="text-stone-300 group-hover:text-stone-400 transition-colors">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -448,11 +460,106 @@ function WeeklyReset({ weeklyReset, projects, onUpdate }) {
   );
 }
 
+// ── All Tasks Tab ──────────────────────────────────────────────────
+const LIST_LABELS = { 'this-week': 'This Week', routines: 'Routines', errands: 'Errands' };
+
+function AllTasksTab({ taskLists, familyMembers, onOpenTask, onToggleTask }) {
+  const [filterPerson, setFilterPerson] = useState(null);
+
+  // Flatten all tasks with their list key
+  const allTasks = Object.entries(taskLists)
+    .filter(([key]) => LIST_LABELS[key])
+    .flatMap(([key, tasks]) => (tasks || []).map(t => ({ ...t, _list: key })));
+
+  const filtered = filterPerson === '__none__'
+    ? allTasks.filter(t => !t.assignedTo)
+    : filterPerson
+    ? allTasks.filter(t => t.assignedTo === filterPerson)
+    : allTasks;
+
+  const active = filtered.filter(t => !t.completed);
+  const done = filtered.filter(t => t.completed);
+
+  return (
+    <div>
+      {/* Person filter pills */}
+      <div className="flex gap-1.5 flex-wrap mb-4">
+        <button
+          onClick={() => setFilterPerson(null)}
+          className={`text-xs px-2.5 py-1 rounded-full border transition-all ${!filterPerson ? 'bg-sage-600 text-white border-sage-600' : 'border-stone-200 text-stone-500 hover:border-sage-300'}`}
+        >
+          Everyone
+        </button>
+        {familyMembers.map(m => (
+          <button key={m.id} onClick={() => setFilterPerson(m.id === filterPerson ? null : m.id)}
+            className={`text-xs px-2.5 py-1 rounded-full border transition-all flex items-center gap-1.5 ${filterPerson === m.id ? 'text-white border-transparent' : 'border-stone-200 text-stone-500 hover:border-stone-300'}`}
+            style={filterPerson === m.id ? { backgroundColor: m.color } : {}}
+          >
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: filterPerson === m.id ? 'white' : m.color }} />
+            {m.name}
+          </button>
+        ))}
+        <button
+          onClick={() => setFilterPerson(filterPerson === '__none__' ? null : '__none__')}
+          className={`text-xs px-2.5 py-1 rounded-full border transition-all ${filterPerson === '__none__' ? 'bg-stone-600 text-white border-stone-600' : 'border-stone-200 text-stone-500 hover:border-stone-300'}`}
+        >
+          Unassigned
+        </button>
+      </div>
+
+      {active.length === 0 && done.length === 0 && (
+        <p className="text-stone-300 text-sm py-4 text-center">No tasks found.</p>
+      )}
+
+      <ul className="divide-y divide-stone-50">
+        {active.map(task => (
+          <li key={`${task._list}-${task.id}`} className="flex items-start gap-3 group py-2">
+            <input type="checkbox" className="custom-checkbox flex-shrink-0 mt-0.5"
+              checked={task.completed}
+              onChange={() => onToggleTask(task._list, task.id)}
+            />
+            <button onClick={() => onOpenTask(task)} className="flex-1 text-left">
+              <span className="text-sm text-stone-700 leading-snug">{task.text}</span>
+              <span className="flex items-center gap-2 mt-0.5 flex-wrap">
+                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-stone-100 text-stone-400">{LIST_LABELS[task._list]}</span>
+                {task.dueDate && (
+                  <span className={`text-[10px] font-medium ${isToday(task.dueDate) ? 'text-terracotta-500' : new Date(task.dueDate) < new Date() ? 'text-red-400' : 'text-stone-400'}`}>
+                    {isToday(task.dueDate) ? 'Due today' : new Date(task.dueDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </span>
+                )}
+                {(() => { const m = familyMembers.find(fm => fm.id === task.assignedTo); return m ? (
+                  <span className="text-[10px] text-stone-400 flex items-center gap-1">
+                    <span className="w-3 h-3 rounded-full" style={{ backgroundColor: m.color }} />{m.name}
+                  </span>
+                ) : null; })()}
+              </span>
+            </button>
+            {task.priority && <span className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${PRIORITY_COLORS[task.priority]}`} />}
+          </li>
+        ))}
+        {done.length > 0 && (
+          <>
+            <li className="pt-3 pb-1"><p className="text-xs text-stone-400">Done ({done.length})</p></li>
+            {done.map(task => (
+              <li key={`done-${task._list}-${task.id}`} className="flex items-center gap-3 group py-1.5">
+                <input type="checkbox" className="custom-checkbox flex-shrink-0" checked onChange={() => onToggleTask(task._list, task.id)} />
+                <span className="text-sm text-stone-400 line-through flex-1">{task.text}</span>
+                <span className="text-[10px] text-stone-300">{LIST_LABELS[task._list]}</span>
+              </li>
+            ))}
+          </>
+        )}
+      </ul>
+    </div>
+  );
+}
+
 // ── Main component ─────────────────────────────────────────────────
 const TABS = [
   { key: 'this-week', label: 'This Week' },
   { key: 'routines', label: 'Routines' },
   { key: 'errands', label: 'Errands' },
+  { key: 'all', label: 'All Tasks' },
   { key: 'meals', label: 'Meals' },
 ];
 
@@ -483,48 +590,58 @@ export default function HomeHub({ data, onUpdate, onNavigate }) {
       {/* Task list + Calendar widget side by side on desktop */}
       <div className="flex flex-col md:flex-row gap-4 items-start">
 
-      {/* Tab bar + view toggle */}
+      {/* Task tabs card */}
       <div className="bg-white rounded-2xl shadow-card flex-1 min-w-0">
-        <div className="flex items-center border-b border-stone-100 px-1 pt-1">
-          <div className="flex flex-1 overflow-x-auto">
-            {TABS.map(tab => (
-              <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-                className={`px-3 py-2.5 text-sm font-medium whitespace-nowrap transition-all border-b-2 ${
-                  activeTab === tab.key ? 'border-sage-500 text-sage-700' : 'border-transparent text-stone-400 hover:text-stone-600'
-                }`}>
-                {tab.label}
-                {tab.key !== 'meals' && taskLists[tab.key] && (
-                  <span className="ml-1.5 text-xs text-stone-400">
-                    {(taskLists[tab.key] || []).filter(t => !t.completed).length}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-          {activeTab !== 'meals' && (
-            <div className="flex items-center gap-1 px-2 pb-1 flex-shrink-0">
-              {(activeTab === 'this-week' || activeTab === 'routines' || activeTab === 'errands') && (
-                <button
-                  onClick={() => onNavigate('library')}
-                  className="text-[11px] font-medium text-sage-600 hover:text-sage-700 px-2 py-1 rounded-lg hover:bg-sage-50 transition-colors whitespace-nowrap mr-1"
-                  title="Browse maintenance library"
-                >
-                  Browse Library
-                </button>
+        {/* Row 1: tabs only — scrollable, full width */}
+        <div className="flex overflow-x-auto border-b border-stone-100 px-1 pt-1">
+          {TABS.map(tab => (
+            <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+              className={`px-3 py-2.5 text-sm font-medium whitespace-nowrap transition-all border-b-2 flex-shrink-0 ${
+                activeTab === tab.key ? 'border-sage-500 text-sage-700' : 'border-transparent text-stone-400 hover:text-stone-600'
+              }`}>
+              {tab.label}
+              {tab.key !== 'meals' && tab.key !== 'all' && taskLists[tab.key] && (
+                <span className="ml-1.5 text-xs text-stone-400">
+                  {(taskLists[tab.key] || []).filter(t => !t.completed).length}
+                </span>
               )}
-              <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-stone-100 text-stone-600' : 'text-stone-400 hover:text-stone-500'}`} title="List view">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
+            </button>
+          ))}
+        </div>
+
+        {/* Row 2: Browse Library (task tabs only) + view toggles */}
+        {activeTab !== 'meals' && activeTab !== 'all' && (
+          <div className="flex items-center justify-between px-3 py-1.5 border-b border-stone-50 bg-stone-50/40">
+            <button
+              onClick={() => onNavigate('library')}
+              className="text-xs font-medium text-sage-600 hover:text-sage-700 flex items-center gap-1.5 py-0.5 transition-colors"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+              </svg>
+              Browse Library
+            </button>
+            <div className="flex gap-1">
+              <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-stone-200 text-stone-600' : 'text-stone-400 hover:text-stone-500'}`} title="List view">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
               </button>
-              <button onClick={() => setViewMode('board')} className={`p-1.5 rounded-lg transition-colors ${viewMode === 'board' ? 'bg-stone-100 text-stone-600' : 'text-stone-400 hover:text-stone-500'}`} title="Board view">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="5" height="18" rx="1" /><rect x="10" y="3" width="5" height="12" rx="1" /><rect x="17" y="3" width="5" height="15" rx="1" /></svg>
+              <button onClick={() => setViewMode('board')} className={`p-1.5 rounded-lg transition-colors ${viewMode === 'board' ? 'bg-stone-200 text-stone-600' : 'text-stone-400 hover:text-stone-500'}`} title="Board view">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="5" height="18" rx="1" /><rect x="10" y="3" width="5" height="12" rx="1" /><rect x="17" y="3" width="5" height="15" rx="1" /></svg>
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="p-4">
           {activeTab === 'meals' ? (
             <MealsTab meals={meals} mealPreferences={mealPreferences} groceryItems={groceryItems} familyMembers={familyMembers} onUpdate={onUpdate} />
+          ) : activeTab === 'all' ? (
+            <AllTasksTab
+              taskLists={taskLists}
+              familyMembers={familyMembers}
+              onOpenTask={() => {}}
+              onToggleTask={(listKey, taskId) => updateList(listKey, (taskLists[listKey] || []).map(t => t.id === taskId ? { ...t, completed: !t.completed } : t))}
+            />
           ) : (
             <TaskListTab
               listKey={activeTab}
