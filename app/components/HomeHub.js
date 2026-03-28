@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import TaskDetailModal from './TaskDetailModal';
+import MaintenanceLibrary from './MaintenanceLibrary';
 import { generateMealPlan, buildGroceryList, MEAL_DATABASE } from '../../lib/mealDatabase';
 
 // ── Helpers ────────────────────────────────────────────────────────
@@ -470,11 +471,20 @@ export default function HomeHub({ data, onUpdate }) {
   const { taskLists = {}, weeklyReset, meals, mealPreferences, groceryItems, familyMembers = [] } = data;
   const [activeTab, setActiveTab] = useState('this-week');
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'board'
+  const [showLibrary, setShowLibrary] = useState(false);
 
   const updateList = (key, items) => onUpdate({ taskLists: { ...taskLists, [key]: items } });
 
   return (
     <div className="space-fade max-w-2xl mx-auto space-y-4">
+      {showLibrary && (
+        <MaintenanceLibrary
+          taskLists={taskLists}
+          appointments={data.appointments || []}
+          onUpdate={onUpdate}
+          onClose={() => setShowLibrary(false)}
+        />
+      )}
       {/* Header */}
       <div className="mb-2">
         <p className="text-stone-400 text-sm">{formatDate()}</p>
@@ -509,7 +519,16 @@ export default function HomeHub({ data, onUpdate }) {
             ))}
           </div>
           {activeTab !== 'meals' && (
-            <div className="flex gap-1 px-2 pb-1 flex-shrink-0">
+            <div className="flex items-center gap-1 px-2 pb-1 flex-shrink-0">
+              {(activeTab === 'routines' || activeTab === 'errands') && (
+                <button
+                  onClick={() => setShowLibrary(true)}
+                  className="text-[11px] font-medium text-sage-600 hover:text-sage-700 px-2 py-1 rounded-lg hover:bg-sage-50 transition-colors whitespace-nowrap mr-1"
+                  title="Browse maintenance library"
+                >
+                  Browse Library
+                </button>
+              )}
               <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-stone-100 text-stone-600' : 'text-stone-400 hover:text-stone-500'}`} title="List view">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
               </button>
