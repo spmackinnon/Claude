@@ -411,27 +411,14 @@ function WeeklyReset({ weeklyReset, projects, onUpdate }) {
       {open && (
         <div className="px-4 pb-4 border-t border-stone-50">
           <div className="mt-3 mb-3">
-            <label className="text-xs text-stone-400 mb-1.5 block">This week's focus area</label>
-            <input
-              type="text"
-              list="focus-suggestions"
-              value={weeklyReset.focusArea || ''}
-              onChange={e => onUpdate({ weeklyReset: { ...weeklyReset, focusArea: e.target.value } })}
-              placeholder="Type or pick an active project…"
-              className="w-full text-sm border border-stone-200 rounded-xl px-3 py-2 text-stone-700 placeholder-stone-300"
-            />
-            {activeProjects.length > 0 && (
-              <datalist id="focus-suggestions">
-                {activeProjects.map(p => <option key={p.id} value={p.title} />)}
-              </datalist>
-            )}
-            {activeProjects.length > 0 && (
-              <div className="flex gap-1.5 flex-wrap mt-2">
+            <label className="text-xs text-stone-400 mb-2 block">This week's focus area</label>
+            {activeProjects.length > 0 ? (
+              <div className="flex gap-1.5 flex-wrap">
                 {activeProjects.map(p => (
                   <button
                     key={p.id}
                     type="button"
-                    onClick={() => onUpdate({ weeklyReset: { ...weeklyReset, focusArea: p.title } })}
+                    onClick={() => onUpdate({ weeklyReset: { ...weeklyReset, focusArea: weeklyReset.focusArea === p.title ? '' : p.title } })}
                     className={`text-xs px-2.5 py-1 rounded-full border transition-all ${
                       weeklyReset.focusArea === p.title
                         ? 'bg-sage-600 text-white border-sage-600'
@@ -442,6 +429,8 @@ function WeeklyReset({ weeklyReset, projects, onUpdate }) {
                   </button>
                 ))}
               </div>
+            ) : (
+              <p className="text-xs text-stone-300 italic">Add an active project in Projects to set a focus area.</p>
             )}
           </div>
           <ul className="space-y-2">
