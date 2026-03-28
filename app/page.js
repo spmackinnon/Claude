@@ -92,6 +92,7 @@ export default function App() {
         onNavigate={setCurrentSpace}
         onMapOpen={() => setShowMap(true)}
         onFaqOpen={() => setShowFaq(true)}
+        onLibraryOpen={() => setCurrentSpace('library')}
       />
 
       <main className="md:ml-56 pb-20 md:pb-0">
@@ -107,6 +108,11 @@ export default function App() {
               <span className="text-xs font-bold tracking-widest text-stone-700 uppercase">FIXR HOME OS</span>
             </div>
             <div className="flex gap-2">
+              <button onClick={() => setCurrentSpace('library')} className={`p-1.5 rounded-lg transition-all ${currentSpace === 'library' ? 'text-sage-600 bg-sage-50' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-100'}`} title="Task Library">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+                </svg>
+              </button>
               <button onClick={() => setShowMap(true)} className="text-stone-400 hover:text-stone-600 p-1.5 rounded-lg hover:bg-stone-100 transition-all" title="System Map">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
