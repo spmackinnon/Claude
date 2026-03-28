@@ -9,6 +9,7 @@ import Records from './components/Records';
 import Projects from './components/Projects';
 import Recalibrate from './components/Recalibrate';
 import Calendar from './components/Calendar';
+import MaintenanceLibrary from './components/MaintenanceLibrary';
 import Onboarding from './components/Onboarding';
 import SystemMap from './components/SystemMap';
 import FAQ from './components/FAQ';
@@ -120,10 +121,11 @@ export default function App() {
             </div>
           </div>
 
-          {currentSpace === 'home-hub' && <HomeHub data={data} onUpdate={updateData} />}
+          {currentSpace === 'home-hub' && <HomeHub data={data} onUpdate={updateData} onNavigate={setCurrentSpace} />}
           {currentSpace === 'calendar' && <Calendar data={data} onUpdate={updateData} />}
           {currentSpace === 'records' && <Records data={data} onUpdate={updateData} />}
           {currentSpace === 'projects' && <Projects data={data} onUpdate={updateData} />}
+          {currentSpace === 'library' && <MaintenanceLibrary taskLists={data.taskLists} appointments={data.appointments} onUpdate={updateData} />}
           {currentSpace === 'recalibrate' && <Recalibrate data={data} onUpdate={updateData} />}
         </div>
       </main>

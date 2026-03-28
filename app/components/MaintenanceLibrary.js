@@ -142,7 +142,7 @@ function ScheduleModal({ task, onClose, onConfirm }) {
   );
 }
 
-export default function MaintenanceLibrary({ taskLists, appointments, onUpdate, onClose }) {
+export default function MaintenanceLibrary({ taskLists, appointments, onUpdate }) {
   const [activeFreq, setActiveFreq] = useState('weekly');
   const [activeCategory, setActiveCategory] = useState('All');
   const [addedIds, setAddedIds] = useState(new Set());
@@ -187,85 +187,78 @@ export default function MaintenanceLibrary({ taskLists, appointments, onUpdate, 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-white" style={{ animation: 'fadeIn 0.2s ease' }}>
+    <div className="space-fade max-w-2xl mx-auto space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-4 border-b border-stone-100 flex-shrink-0">
-        <div>
-          <h2 className="text-base font-semibold text-stone-800">Maintenance Library</h2>
-          <p className="text-xs text-stone-400 mt-0.5">Browse tasks and add them to your routines or calendar</p>
-        </div>
-        <button onClick={onClose} className="text-stone-400 hover:text-stone-600 p-2 rounded-xl hover:bg-stone-100 transition-all">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
+      <div>
+        <h1 className="font-serif text-2xl text-stone-800">Maintenance Library</h1>
+        <p className="text-sm text-stone-400 mt-1">Browse tasks and add them to your routines or calendar.</p>
       </div>
 
-      {/* Frequency tabs */}
-      <div className="flex border-b border-stone-100 px-4 flex-shrink-0 overflow-x-auto">
-        {Object.entries(FREQUENCY_LABELS).map(([key, label]) => (
-          <button
-            key={key}
-            onClick={() => handleFreqChange(key)}
-            className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-all ${
-              activeFreq === key
-                ? 'border-sage-500 text-sage-700'
-                : 'border-transparent text-stone-400 hover:text-stone-600'
-            }`}
-          >
-            <span className={activeFreq === key ? 'text-sage-600' : 'text-stone-400'}>{FREQ_ICONS[key]}</span>
-            {label}
-            <span className="text-xs text-stone-400">({(MAINTENANCE_TASKS[key] || []).length})</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Search + Category filters */}
-      <div className="px-4 pt-3 pb-2 flex-shrink-0 space-y-2">
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search tasks..."
-          className="w-full text-sm border border-stone-200 rounded-xl px-3 py-2 text-stone-700 placeholder-stone-300 focus:border-sage-400 transition-colors"
-        />
-        <div className="flex gap-1.5 overflow-x-auto pb-1">
-          {categories.map(cat => (
+      <div className="bg-white rounded-2xl shadow-card overflow-hidden">
+        {/* Frequency tabs */}
+        <div className="flex border-b border-stone-100 overflow-x-auto">
+          {Object.entries(FREQUENCY_LABELS).map(([key, label]) => (
             <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`text-xs font-medium whitespace-nowrap px-3 py-1.5 rounded-full border transition-all ${
-                activeCategory === cat
-                  ? 'bg-sage-600 text-white border-sage-600'
-                  : 'border-stone-200 text-stone-500 hover:border-sage-300 hover:text-sage-600'
+              key={key}
+              onClick={() => handleFreqChange(key)}
+              className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-all ${
+                activeFreq === key
+                  ? 'border-sage-500 text-sage-700'
+                  : 'border-transparent text-stone-400 hover:text-stone-600'
               }`}
             >
-              {cat}
+              <span className={activeFreq === key ? 'text-sage-600' : 'text-stone-400'}>{FREQ_ICONS[key]}</span>
+              {label}
+              <span className="text-xs text-stone-400">({(MAINTENANCE_TASKS[key] || []).length})</span>
             </button>
           ))}
         </div>
-      </div>
 
-      {/* Task cards */}
-      <div className="flex-1 overflow-y-auto px-4 pb-6">
-        {filteredTasks.length === 0 ? (
-          <div className="py-12 text-center">
-            <p className="text-stone-400 text-sm">No tasks found.</p>
-          </div>
-        ) : (
-          <div className="space-y-3 pt-1">
-            {filteredTasks.map(task => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                frequency={activeFreq}
-                addedIds={addedIds}
-                onAddToRoutines={handleAddToRoutines}
-                onSchedule={setSchedulingTask}
-              />
+        {/* Search + Category filters */}
+        <div className="px-4 pt-3 pb-2 space-y-2 border-b border-stone-50">
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search tasks..."
+            className="w-full text-sm border border-stone-200 rounded-xl px-3 py-2 text-stone-700 placeholder-stone-300 focus:border-sage-400 transition-colors"
+          />
+          <div className="flex gap-1.5 overflow-x-auto pb-1">
+            {categories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`text-xs font-medium whitespace-nowrap px-3 py-1.5 rounded-full border transition-all ${
+                  activeCategory === cat
+                    ? 'bg-sage-600 text-white border-sage-600'
+                    : 'border-stone-200 text-stone-500 hover:border-sage-300 hover:text-sage-600'
+                }`}
+              >
+                {cat}
+              </button>
             ))}
           </div>
-        )}
+        </div>
+
+        {/* Task cards */}
+        <div className="p-4">
+          {filteredTasks.length === 0 ? (
+            <p className="text-stone-300 text-sm py-6 text-center">No tasks found.</p>
+          ) : (
+            <div className="space-y-3">
+              {filteredTasks.map(task => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  frequency={activeFreq}
+                  addedIds={addedIds}
+                  onAddToRoutines={handleAddToRoutines}
+                  onSchedule={setSchedulingTask}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {schedulingTask && (

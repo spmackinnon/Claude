@@ -1,7 +1,6 @@
 'use client';
 import { useState } from 'react';
 import TaskDetailModal from './TaskDetailModal';
-import MaintenanceLibrary from './MaintenanceLibrary';
 import { generateMealPlan, buildGroceryList, MEAL_DATABASE } from '../../lib/mealDatabase';
 
 // ── Helpers ────────────────────────────────────────────────────────
@@ -456,24 +455,15 @@ const TABS = [
   { key: 'meals', label: 'Meals' },
 ];
 
-export default function HomeHub({ data, onUpdate }) {
+export default function HomeHub({ data, onUpdate, onNavigate }) {
   const { taskLists = {}, weeklyReset, meals, mealPreferences, groceryItems, familyMembers = [] } = data;
   const [activeTab, setActiveTab] = useState('this-week');
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'board'
-  const [showLibrary, setShowLibrary] = useState(false);
 
   const updateList = (key, items) => onUpdate({ taskLists: { ...taskLists, [key]: items } });
 
   return (
     <div className="space-fade max-w-2xl mx-auto space-y-4">
-      {showLibrary && (
-        <MaintenanceLibrary
-          taskLists={taskLists}
-          appointments={data.appointments || []}
-          onUpdate={onUpdate}
-          onClose={() => setShowLibrary(false)}
-        />
-      )}
       {/* Header */}
       <div className="mb-2">
         <p className="text-stone-400 text-sm">{formatDate()}</p>
@@ -511,7 +501,7 @@ export default function HomeHub({ data, onUpdate }) {
             <div className="flex items-center gap-1 px-2 pb-1 flex-shrink-0">
               {(activeTab === 'routines' || activeTab === 'errands') && (
                 <button
-                  onClick={() => setShowLibrary(true)}
+                  onClick={() => onNavigate('library')}
                   className="text-[11px] font-medium text-sage-600 hover:text-sage-700 px-2 py-1 rounded-lg hover:bg-sage-50 transition-colors whitespace-nowrap mr-1"
                   title="Browse maintenance library"
                 >
