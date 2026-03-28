@@ -385,14 +385,65 @@ export default function Projects({ data, onUpdate }) {
         </div>
       )}
 
+      {/* Someday list */}
+      <div className="mt-6">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h2 className="text-sm font-semibold text-stone-600">Someday / Idea Parking Lot</h2>
+            <p className="text-xs text-stone-400 mt-0.5">Ideas that aren't projects yet — but you don't want to lose.</p>
+          </div>
+        </div>
+        <SomedayList somedayList={data.somedayList || []} onUpdate={onUpdate} onPromote={(item) => {
+          const newProject = { id: `p${Date.now()}`, title: item.text, description: item.notes, status: 'active', dueDate: '', subtasks: [], notes: '' };
+          onUpdate({ projects: [...projects, newProject], somedayList: (data.somedayList || []).filter(s => s.id !== item.id) });
+        }} />
+      </div>
+
       {/* Clarifier */}
-      <div className="mt-6 bg-stone-50 rounded-xl p-4">
+      <div className="mt-4 bg-stone-50 rounded-xl p-4">
         <p className="text-xs text-stone-400 font-medium mb-1.5">Project vs. Routine?</p>
         <p className="text-sm text-stone-500">
           <span className="font-medium">Routine</span> = repeats regularly (weekly dinner planning, school pickups).<br />
           <span className="font-medium">Project</span> = has a finish line (guest room refresh, planning a birthday party).
         </p>
       </div>
+    </div>
+  );
+}
+
+function SomedayList({ somedayList, onUpdate, onPromote }) {
+  const [newItem, setNewItem] = useState('');
+  const addItem = (e) => {
+    e.preventDefault();
+    if (!newItem.trim()) return;
+    onUpdate({ somedayList: [...somedayList, { id: `s${Date.now()}`, text: newItem.trim(), notes: '' }] });
+    setNewItem('');
+  };
+  const deleteItem = (id) => onUpdate({ somedayList: somedayList.filter(s => s.id !== id) });
+  return (
+    <div className="bg-white rounded-2xl shadow-card p-4">
+      <form onSubmit={addItem} className="flex gap-2 mb-3">
+        <input type="text" value={newItem} onChange={e => setNewItem(e.target.value)} placeholder="Add an idea..." className="flex-1 text-sm border border-stone-200 rounded-xl px-3 py-2 text-stone-700 placeholder-stone-300 focus:border-sage-400 transition-colors" />
+        <button type="submit" disabled={!newItem.trim()} className="text-sm bg-stone-100 text-stone-600 px-3 py-2 rounded-xl hover:bg-stone-200 transition-colors disabled:opacity-40">Add</button>
+      </form>
+      {somedayList.length === 0 ? (
+        <p className="text-stone-300 text-sm py-2 text-center">No ideas yet. Add things you want to do eventually.</p>
+      ) : (
+        <ul className="space-y-2">
+          {somedayList.map(item => (
+            <li key={item.id} className="flex items-center gap-3 group">
+              <span className="w-1.5 h-1.5 rounded-full bg-stone-300 flex-shrink-0" />
+              <span className="flex-1 text-sm text-stone-600">{item.text}</span>
+              <button onClick={() => onPromote(item)} title="Promote to active project" className="opacity-0 group-hover:opacity-100 text-xs text-sage-600 hover:text-sage-700 font-medium transition-all flex-shrink-0">
+                → Project
+              </button>
+              <button onClick={() => deleteItem(item.id)} className="opacity-0 group-hover:opacity-100 text-stone-300 hover:text-red-400 transition-all flex-shrink-0">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
