@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useLocalStorage } from '../lib/useLocalStorage';
+import { useUndoableStorage } from '../lib/useUndoableStorage';
 import { defaultData } from '../lib/defaultData';
 
 import Navigation from './components/Navigation';
@@ -13,9 +13,10 @@ import Onboarding from './components/Onboarding';
 import SystemMap from './components/SystemMap';
 import FAQ from './components/FAQ';
 import PWARegister from './components/PWARegister';
+import UndoToast from './components/UndoToast';
 
 export default function App() {
-  const [data, setData, hydrated] = useLocalStorage('fixr-home-os', defaultData);
+  const { data, setData, hydrated, undo, canUndo, lastChanged } = useUndoableStorage('fixr-home-os', defaultData);
   const [currentSpace, setCurrentSpace] = useState('home-hub');
   const [showMap, setShowMap] = useState(false);
   const [showFaq, setShowFaq] = useState(false);
@@ -83,6 +84,7 @@ export default function App() {
       {showFaq && <FAQ onClose={() => setShowFaq(false)} />}
 
       <PWARegister />
+      <UndoToast lastChanged={lastChanged} canUndo={canUndo} onUndo={undo} />
 
       <Navigation
         current={currentSpace}
