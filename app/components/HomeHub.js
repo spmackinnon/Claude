@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import TaskDetailModal from './TaskDetailModal';
 import CalendarWidget from './CalendarWidget';
 import { generateMealPlan, buildGroceryList, MEAL_DATABASE } from '../../lib/mealDatabase';
@@ -24,66 +24,78 @@ const PRIORITY_COLORS = { high: 'bg-red-400', medium: 'bg-amber-400', low: 'bg-b
 const today = () => new Date().toISOString().split('T')[0];
 
 // ── Single task row ────────────────────────────────────────────────
-function TaskRow({ task, familyMembers, onToggle, onOpen }) {
+function TaskRow({ task, familyMembers, onToggle, onOpen, onUpdate }) {
   const member = familyMembers.find(m => m.id === task.assignedTo);
-  const hasDetails = task.notes || (task.links && task.links.length > 0);
+  const dateRef = useRef(null);
+  const isOverdue = task.dueDate && !task.completed && new Date(task.dueDate + 'T12:00:00') < new Date() && !isToday(task.dueDate);
+
+  const cycleAssignee = (e) => {
+    e.stopPropagation();
+    const ids = [null, ...familyMembers.map(m => m.id)];
+    const next = ids[(ids.indexOf(task.assignedTo) + 1) % ids.length];
+    onUpdate({ ...task, assignedTo: next });
+  };
+
+  const setDate = (e) => {
+    e.stopPropagation();
+    onUpdate({ ...task, dueDate: e.target.value });
+  };
 
   return (
-    <li className="flex items-start gap-3 group py-1.5">
-      <input
-        type="checkbox"
-        className="custom-checkbox flex-shrink-0 mt-0.5"
-        checked={task.completed}
-        onChange={onToggle}
-      />
-      <button
-        onClick={onOpen}
-        className={`flex-1 text-left leading-snug ${task.completed ? 'line-through text-stone-400' : 'text-stone-700 hover:text-stone-900'}`}
-      >
-        <span className="text-sm">{task.text}</span>
-        {/* Due date + assignee below task text */}
-        {(task.dueDate || member) && (
-          <span className="flex items-center gap-2 mt-0.5">
-            {task.dueDate && (
-              <span className={`text-[10px] font-medium ${
-                isToday(task.dueDate)
-                  ? 'text-terracotta-500'
-                  : new Date(task.dueDate) < new Date() && !task.completed
-                  ? 'text-red-400'
-                  : 'text-stone-400'
-              }`}>
-                {isToday(task.dueDate)
-                  ? 'Due today'
-                  : new Date(task.dueDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-              </span>
-            )}
-            {member && (
-              <span className="text-[10px] text-stone-400 flex items-center gap-1">
-                <span className="w-3 h-3 rounded-full inline-block" style={{ backgroundColor: member.color }} />
-                {member.name}
-              </span>
-            )}
-          </span>
-        )}
+    <li className="flex items-center gap-2 group py-1.5">
+      <input type="checkbox" className="custom-checkbox flex-shrink-0" checked={task.completed} onChange={onToggle} />
+
+      {/* Task text */}
+      <button onClick={onOpen} className={`flex-1 text-left text-sm leading-snug min-w-0 ${task.completed ? 'line-through text-stone-400' : 'text-stone-700 hover:text-stone-900'}`}>
+        {task.text}
       </button>
-      <div className="flex items-center gap-1.5 flex-shrink-0 mt-0.5">
-        {task.priority && <span className={`w-2 h-2 rounded-full ${PRIORITY_COLORS[task.priority]}`} title={task.priority} />}
-        {hasDetails && (
-          <span className="text-stone-300 group-hover:text-stone-400 transition-colors">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
-          </span>
-        )}
+
+      {/* Inline due date */}
+      <div className="relative flex-shrink-0" onClick={e => e.stopPropagation()}>
         <button
-          onClick={onOpen}
-          className="opacity-0 group-hover:opacity-100 text-stone-300 hover:text-stone-500 transition-all"
+          onClick={() => dateRef.current?.showPicker?.() || dateRef.current?.click()}
+          className={`text-[11px] font-medium px-2 py-1 rounded-lg transition-colors ${
+            task.dueDate
+              ? isToday(task.dueDate) ? 'bg-terracotta-50 text-terracotta-500' : isOverdue ? 'bg-red-50 text-red-400' : 'bg-stone-100 text-stone-500'
+              : 'text-stone-300 hover:text-stone-400 hover:bg-stone-50'
+          }`}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
+          {task.dueDate
+            ? isToday(task.dueDate) ? 'Today' : new Date(task.dueDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+            : 'Due date'}
         </button>
+        <input
+          ref={dateRef}
+          type="date"
+          value={task.dueDate || ''}
+          onChange={setDate}
+          className="absolute inset-0 opacity-0 w-full cursor-pointer"
+          tabIndex={-1}
+        />
       </div>
+
+      {/* Inline assignee */}
+      <button
+        onClick={cycleAssignee}
+        title={member ? `Assigned to ${member.name} — click to change` : 'Assign to someone'}
+        className={`flex-shrink-0 flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-lg transition-colors ${
+          member ? 'text-stone-600 bg-stone-100 hover:bg-stone-200' : 'text-stone-300 hover:text-stone-400 hover:bg-stone-50'
+        }`}
+      >
+        {member ? (
+          <>
+            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: member.color }} />
+            {member.name}
+          </>
+        ) : 'Assignee'}
+      </button>
+
+      {/* Open detail chevron */}
+      <button onClick={onOpen} className="opacity-0 group-hover:opacity-100 text-stone-300 hover:text-stone-500 transition-all flex-shrink-0">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+      </button>
     </li>
   );
 }
@@ -176,13 +188,21 @@ function TaskListTab({ listKey, tasks, familyMembers, viewMode, onUpdate }) {
       ) : (
         <ul className="divide-y divide-stone-50">
           {active.map(task => (
-            <TaskRow key={task.id} task={task} familyMembers={familyMembers} onToggle={() => toggleTask(task.id)} onOpen={() => setOpenTask(task)} />
+            <TaskRow key={task.id} task={task} familyMembers={familyMembers}
+              onToggle={() => toggleTask(task.id)}
+              onOpen={() => setOpenTask(task)}
+              onUpdate={(updated) => onUpdate(tasks.map(t => t.id === updated.id ? updated : t))}
+            />
           ))}
           {done.length > 0 && (
             <>
               <li className="pt-3 pb-1"><p className="text-xs text-stone-400">Done ({done.length})</p></li>
               {done.map(task => (
-                <TaskRow key={task.id} task={task} familyMembers={familyMembers} onToggle={() => toggleTask(task.id)} onOpen={() => setOpenTask(task)} />
+                <TaskRow key={task.id} task={task} familyMembers={familyMembers}
+                  onToggle={() => toggleTask(task.id)}
+                  onOpen={() => setOpenTask(task)}
+                  onUpdate={(updated) => onUpdate(tasks.map(t => t.id === updated.id ? updated : t))}
+                />
               ))}
             </>
           )}
